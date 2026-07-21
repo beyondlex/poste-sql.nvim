@@ -1,11 +1,11 @@
 -- @connection my-blog
 -- @database inventory
 
-SELECT * FROM items;
+SELECT * FROM items ;
 
-SELECT * FROM blog.authors WHERE ; 
+SELECT * FROM blog.authors;
 
-select id, slug FROM blog.posts;
+select id, slug FROM blog.posts ;
 
 -- SELECT p.slug, a. FROM posts p LEFT JOIN authors a on a.id = p.author_id;
 

@@ -110,12 +110,6 @@ local function try_rust_context_async(bufnr, line_before, cursor_line, callback)
   local sql_text, offset = extract_sql_block(bufnr, line_before, cursor_line)
   if not sql_text then callback(nil); return end
 
-  -- If cursor is on a semicolon (line ends with WHERE ;), advance past it
-  -- so the context detector sees the position after WHERE, not the ; token.
-  if offset <= #sql_text and sql_text:sub(offset + 1, offset + 1) == ";" then
-    offset = offset + 1
-  end
-
   if vim.g.poste_sql_debug then
     local char_at_cursor = offset <= #sql_text and sql_text:sub(offset + 1, offset + 1) or "N/A"
     local ctx_start = math.max(1, offset - 4)
