@@ -522,6 +522,14 @@ function M.setup(_)
     })
   end
 
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "poste_sql", "poste_sqlite" },
+    callback = function()
+      pcall(vim.treesitter.language.register, "", "poste_sql")
+      pcall(vim.treesitter.language.register, "", "poste_sqlite")
+    end,
+  })
+
   vim.api.nvim_create_user_command("PosteSQLCmpStatus", function()
     local sql_comp = require("poste.sql.completion")
     local ft = vim.bo.filetype
