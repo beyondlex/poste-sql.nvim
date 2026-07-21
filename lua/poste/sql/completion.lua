@@ -118,8 +118,11 @@ local function try_rust_context_async(bufnr, line_before, cursor_line, callback)
 
   if vim.g.poste_sql_debug then
     local char_at_cursor = offset <= #sql_text and sql_text:sub(offset + 1, offset + 1) or "N/A"
-    vim.notify(string.format("DEBUG: offset=%d char='%s' line_before_len=%d",
-      offset, char_at_cursor, #line_before), vim.log.levels.INFO, { title = "Poste SQL" })
+    local ctx_start = math.max(1, offset - 4)
+    local ctx_end = math.min(#sql_text, offset + 6)
+    local context = offset <= #sql_text and sql_text:sub(ctx_start, ctx_end) or "N/A"
+    vim.notify(string.format("DEBUG: offset=%d char='%s' ctx='%s' line_before_len=%d",
+      offset, char_at_cursor, context:gsub("\n", "\\n"), #line_before), vim.log.levels.INFO, { title = "Poste SQL" })
   end
 
   local ckey = cache_key(bufnr, cursor_line, line_before)
