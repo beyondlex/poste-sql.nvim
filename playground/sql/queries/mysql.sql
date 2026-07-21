@@ -11,7 +11,7 @@ select id, slug FROM blog.posts;
 
 -- SELECT p.slug, a.bio  FROM posts p LEFT JOIN authors a on a.id = p.author_id;
 
--- UPDATE posts SET bio = '' WHERE id i
+-- UPDATE posts SET bio = '' AFTERE id i
 
 -- @database inventory
 
