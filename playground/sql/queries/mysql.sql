@@ -5,7 +5,7 @@ SELECT * FROM items;
 
 SELECT * FROM blog.authors;
 
-select id, slug FROM posts;
+select id, slug FROM blog.posts;
 
 -- SELECT p.slug, a. FROM posts p LEFT JOIN authors a on a.id = p.author_id;
 
@@ -13,14 +13,7 @@ select id, slug FROM posts;
 
 -- UPDATE posts SET bio = '' WHERE id i
 
-UPDATE posts SET status='', slug='', author_id=1 WHERE id = 1;
-
-
-
-
--- SELECT * FROM posts WHERE id IN (SELECT id FROM posts WHERE author_id IS NULL)
-
--- UPDATE posts SET aluthor_id=1, id=1, bio='' WHERE;
+-- @database inventory
 
 SELECT id, page_id, url, measured_at, metric_01 from web_vitals ;
 SELECT * from web_vitals ;

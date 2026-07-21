@@ -67,10 +67,14 @@ function M.is_editable_field(col_meta)
   if col_meta.ctype and TYPES.ineditable[col_meta.ctype:lower()] then
     return false
   end
-  return true
+return true
 end
 
----------------------------------------------------------------------------
+function M.has_join(sql)
+  return sql and sql:upper():match("JOIN") ~= nil
+end
+
+------------------------------------------------------------------------------
 -- Value parsing
 ---------------------------------------------------------------------------
 
