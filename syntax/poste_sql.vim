@@ -17,7 +17,6 @@ syn match PosteSqlSeparator '^###' contained
 " ─── Directives (inside comments) ────────────
 syn match PosteSqlDirective
   \ '@\%(connection\|database\|protocol\)'
-  \ contained
   \ nextgroup=PosteSqlDirectiveValue skipwhite
 syn match PosteSqlDirectiveValue '\S.*$' contained
 
