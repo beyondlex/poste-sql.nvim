@@ -84,26 +84,45 @@ end
 --- @param file string
 --- @param table_name string Parent table
 --- @param col_name string Column name under cursor
-local function show_column_info(binary, conn, db, file, table_name, col_name)
+--- @param schema string|nil Schema name (for PG)
+local function show_column_info(binary, conn, db, file, table_name, col_name, schema)
   -- Strip backtick/quote quoting from names (from RENAME/CHANGE COLUMN SQL)
   table_name = table_name:gsub("^`", ""):gsub("`$", ""):gsub('^"', ''):gsub('"$', '')
   col_name = col_name:gsub("^`", ""):gsub("`$", ""):gsub('^"', ''):gsub('"$', '')
-  local cmd = string.format("%s introspect %s --type columns --table %s --env %s",
-    vim.fn.shellescape(binary),
-    vim.fn.shellescape(conn),
-    vim.fn.shellescape(table_name),
-    vim.fn.shellescape(state.current_env)
-  )
-  if file and file ~= "" then
-    cmd = cmd .. " --path " .. vim.fn.shellescape(vim.fn.fnamemodify(file, ":h"))
+  if not table_name or table_name == "" then
+    vim.schedule(function()
+      vim.notify("Cannot introspect column: empty table name", vim.log.levels.ERROR, { title = "Poste SQL" })
+    end)
+    return
+  end
+
+  local args = { binary, "introspect", conn,
+    "--type", "columns", "--table", table_name,
+    "--path", vim.fn.fnamemodify(file, ":h"),
+    "--env", state.current_env or "dev" }
+
+  -- For MySQL, schema = database, so use schema as the database override
+  -- For PG, keep db as the database and pass schema as --schema
+  local cc = require("poste.sql.connections").get_connection_config(conn)
+  local dialect = cc and cc.dialect or ""
+  if dialect == "mysql" and schema and schema ~= "" then
+    db = schema
+    schema = nil
+  end
+
+  if schema and schema ~= "" then
+    table.insert(args, "--schema")
+    table.insert(args, schema)
   end
   if db and db ~= vim.NIL and db ~= "" then
-    cmd = cmd .. " --database " .. vim.fn.shellescape(db)
+    table.insert(args, "--database")
+    table.insert(args, db)
   end
 
-  state.log("INFO", "Column info cmd: " .. cmd)
+  state.log("INFO", "Column info args: " .. vim.inspect(args))
 
-  vim.fn.jobstart(cmd, {
+  local stderr_lines = {}
+  vim.fn.jobstart(args, {
     stdout_buffered = true,
     stderr_buffered = true,
     on_stdout = function(_, data)
@@ -153,16 +172,22 @@ local function show_column_info(binary, conn, db, file, table_name, col_name)
       end)
     end,
     on_stderr = function(_, data)
-      data = util.ensure_job_data(data)
-      if #data == 0 then return end
+      if not data then return end
       for _, l in ipairs(data) do
-        state.log("ERROR", "Column info stderr: " .. l)
+        if l ~= "" then
+          table.insert(stderr_lines, l)
+          state.log("ERROR", "Column info stderr: " .. l)
+        end
       end
     end,
     on_exit = function(_, code)
       if code ~= 0 then
         vim.schedule(function()
-          vim.notify("Column introspection exited with code " .. code, vim.log.levels.ERROR, { title = "Poste SQL" })
+          local msg = "Column introspection exited with code " .. code
+          if #stderr_lines > 0 then
+            msg = msg .. "\n" .. table.concat(stderr_lines, "\n")
+          end
+          vim.notify(msg, vim.log.levels.ERROR, { title = "Poste SQL" })
         end)
       end
     end,
@@ -420,14 +445,15 @@ function M.show_table_ddl()
         if ok and parsed then
           util.clean_nil(parsed)
           local pt = nil
+          local ps = nil
           local prefix = parsed.ctx_data or cword
           if parsed.tables then
             for _, t in ipairs(parsed.tables) do
-              if t.alias and t.alias:lower() == prefix:lower() then pt = t.name; break end
+              if t.alias and t.alias:lower() == prefix:lower() then pt = t.name; ps = t.schema; break end
             end
           end
           if pt then
-            show_column_info(binary, conn, db, file, pt, after_dot_col)
+            show_column_info(binary, conn, db, file, pt, after_dot_col, ps)
             return
           end
         end
@@ -488,13 +514,14 @@ function M.show_table_ddl()
         -- Resolve column: check if cword is a known column (not table name)
         local is_column = false
         local parent_table = nil
+        local parent_schema = nil
         if ct == "dot_column" and parsed.ctx_data then
           -- alias.column: resolve alias
           local prefix = parsed.ctx_data
           if tables then
             for _, t in ipairs(tables) do
               if t.alias and t.alias:lower() == prefix:lower() then
-                parent_table = strip_q(t.name); break
+                parent_table = strip_q(t.name); parent_schema = t.schema; break
               end
             end
           end
@@ -554,12 +581,13 @@ function M.show_table_ddl()
           elseif not is_table then
             -- Not a table name: use first table as parent, cword is column
             parent_table = strip_q(tables[1].name or tables[1].alias)
+            parent_schema = tables[1].schema
             is_column = parent_table ~= nil
           end
         end
 
         if is_column and parent_table and parent_table:lower() ~= cword:lower() then
-          show_column_info(binary, conn, db, file, parent_table, cword)
+          show_column_info(binary, conn, db, file, parent_table, cword, parent_schema)
           return
         end
       end
