@@ -807,6 +807,8 @@ function M.setup(_)
   vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
     pattern = { "*.sql", "*.sqlite" },
     callback = function()
+      pcall(vim.treesitter.language.register, "", "poste_sql")
+      pcall(vim.treesitter.language.register, "", "poste_sqlite")
       local name = vim.api.nvim_buf_get_name(0)
       if name:match("%.sqlite$") then
         vim.bo.filetype = "poste_sqlite"
