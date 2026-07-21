@@ -25,6 +25,8 @@ See `docs/dev/sql/README.md` for detailed file index.
 
 | Want | Go to |
 |------|-------|
+| **Shared infra (state, cli, select, indicators, buffer_setup, help, etc.)** | `../poste.nvim/lua/poste/` — edit there |
+| **Rust CLI (crates, build system)** | `../poste.nvim/crates/` — edit there |
 | Completion rules | `.opencode/skills/sql-completion/SKILL.md` |
 | Build & test | `tests/run.sh` |
 | Agent learnings | `LEARNINGS.md` |
