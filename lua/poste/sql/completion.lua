@@ -122,6 +122,10 @@ local function try_rust_context_async(bufnr, line_before, cursor_line, callback)
 
   local cmd = string.format("%s context detect %d%s", vim.fn.shellescape(binary), offset,
     dialect ~= "generic" and (" --dialect " .. dialect) or "")
+  if vim.g.poste_sql_debug then
+    vim.notify(string.format("DEBUG cmd: %s | sql_text=%d bytes", cmd, #sql_text), vim.log.levels.INFO, { title = "Poste SQL" })
+    vim.notify(string.format("DEBUG sql_text: ---\n%s\n---", sql_text:sub(1, 500)), vim.log.levels.INFO, { title = "Poste SQL" })
+  end
   local output = vim.fn.system(cmd, sql_text)
   if vim.v.shell_error ~= 0 then callback(nil); return end
 
