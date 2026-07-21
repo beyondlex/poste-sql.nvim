@@ -525,11 +525,25 @@ function M.ensure_columns(tbl, schema, callback)
   local args = { binary, "introspect", ctx.connection,
     "--type", "columns", "--table", tbl,
     "--path", M.search_dir(), "--env", state.current_env or "dev" }
-  if schema then
+
+  -- For MySQL, schema = database, so use schema as the database override
+  local db_override = ctx.database
+  if schema and schema ~= "" then
+    local ok_conn, conn_mod = pcall(require, "poste.sql.connections")
+    if ok_conn then
+      local conn = conn_mod.get_connection_config(ctx.connection)
+      if conn and conn.dialect == "mysql" then
+        db_override = schema
+        schema = nil
+      end
+    end
+  end
+
+  if schema and schema ~= "" then
     vim.list_extend(args, { "--schema", schema })
   end
-  if ctx.database and ctx.database ~= "" then
-    vim.list_extend(args, { "--database", ctx.database })
+  if db_override and db_override ~= "" then
+    vim.list_extend(args, { "--database", db_override })
   end
 
   vim.fn.jobstart(args, {

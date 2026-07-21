@@ -39,7 +39,7 @@ local function get_dialect_flag()
   if ok_ctx and resolved_ctx and resolved_ctx.connection then
     local ok_conn, conn_mod = pcall(require, "poste.sql.connections")
     if ok_conn then
-      local conn = conn_mod.get_connection_config(ctx.connection)
+      local conn = conn_mod.get_connection_config(resolved_ctx.connection)
       if conn and conn.dialect then
         return conn.dialect
       end
