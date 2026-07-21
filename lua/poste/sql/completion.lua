@@ -116,6 +116,12 @@ local function try_rust_context_async(bufnr, line_before, cursor_line, callback)
     offset = offset + 1
   end
 
+  if vim.g.poste_sql_debug then
+    local char_at_cursor = offset <= #sql_text and sql_text:sub(offset + 1, offset + 1) or "N/A"
+    vim.notify(string.format("DEBUG: offset=%d char='%s' line_before_len=%d",
+      offset, char_at_cursor, #line_before), vim.log.levels.INFO, { title = "Poste SQL" })
+  end
+
   local ckey = cache_key(bufnr, cursor_line, line_before)
   if _ctx_cache[ckey] then
     callback(_ctx_cache[ckey])
@@ -136,12 +142,6 @@ local function try_rust_context_async(bufnr, line_before, cursor_line, callback)
 
   debug.set_rust_raw(output)
   deep_clean(parsed)
-
-  if vim.g.poste_sql_debug then
-    state.log("INFO", string.format("Rust context: type=%s, prefix='%s', tables=%d",
-      tostring(parsed.ctx_type), tostring(parsed.prefix or ""),
-      parsed.tables and #parsed.tables or 0))
-  end
 
   _ctx_cache[ckey] = parsed
   callback(parsed)
