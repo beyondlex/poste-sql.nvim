@@ -525,8 +525,8 @@ function M.setup(_)
   vim.api.nvim_create_autocmd("FileType", {
     pattern = { "poste_sql", "poste_sqlite" },
     callback = function()
-      pcall(vim.treesitter.language.register, "", "poste_sql")
-      pcall(vim.treesitter.language.register, "", "poste_sqlite")
+      pcall(vim.treesitter.language.register, "__poste_sql_disabled__", "poste_sql")
+      pcall(vim.treesitter.language.register, "__poste_sql_disabled__", "poste_sqlite")
     end,
   })
 
@@ -807,17 +807,14 @@ function M.setup(_)
   vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
     pattern = { "*.sql", "*.sqlite" },
     callback = function()
-      pcall(vim.treesitter.language.register, "", "poste_sql")
-      pcall(vim.treesitter.language.register, "", "poste_sqlite")
+      pcall(vim.treesitter.language.register, "__poste_sql_disabled__", "poste_sql")
+      pcall(vim.treesitter.language.register, "__poste_sql_disabled__", "poste_sqlite")
       local name = vim.api.nvim_buf_get_name(0)
       if name:match("%.sqlite$") then
         vim.bo.filetype = "poste_sqlite"
       else
         vim.bo.filetype = "poste_sql"
       end
-      buffer_setup.setup_buffer_keymaps(0)
-      ensure_sql_keymaps(0)
-      setup_db_browser_keymap(0)
 
       local k = state.get_keymap("sql_source", "trigger_completion", "<C-Space>")
       if k then
