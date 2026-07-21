@@ -14,9 +14,13 @@ syn region PosteSqlRequestName
   \ contains=PosteSqlSeparator keepend
 syn match PosteSqlSeparator '^###' contained
 
-" ─── Directives (inside comments) ────────────
+" ─── Directive lines (not Comment, takes priority over PosteSqlComment) ──
+syn match PosteSqlDirectiveLine '^--\s*@\%(connection\|database\|protocol\)\s*.*$'
+  \ contains=PosteSqlDirective
+
+" ─── Directives (inside directive lines) ────────────
 syn match PosteSqlDirective
-  \ '@\%(connection\|database\|protocol\)'
+  \ '@\%(connection\|database\|protocol\)' contained
   \ nextgroup=PosteSqlDirectiveValue skipwhite
 syn match PosteSqlDirectiveValue '\S.*$' contained
 
@@ -32,7 +36,7 @@ syn match PosteSqlMagicVar '{{\$\w\+}}'
 syn match PosteSqlVarRef '{{[^}]\+}}'
 
 " ─── Comments ───────────────────────────────────────
-syn match PosteSqlComment '--.*$' contains=PosteSqlDirective
+syn match PosteSqlComment '--.*$'
 
 " ─── SQL Keywords, Functions, Types ─────────────────
 " NOTE: SQL keyword/function/type highlighting is handled by
@@ -65,7 +69,8 @@ syn match PosteSqlOperator '<@'
 hi def link PosteSqlSeparator   Delimiter
 hi def link PosteSqlRequestName Title
 hi def link PosteSqlComment     Comment
-hi def PosteSqlDirective        guifg=#9B59B6 ctermfg=141 gui=bold
+hi def link PosteSqlDirectiveLine Special
+hi def PosteSqlDirective        guifg=#D19A66 ctermfg=173 gui=bold
 hi def PosteSqlDirectiveValue   guifg=#E5C07B ctermfg=180
 hi def link PosteSqlVarDef      Identifier
 hi def link PosteSqlVarAssign   Operator

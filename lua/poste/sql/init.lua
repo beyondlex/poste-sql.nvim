@@ -524,9 +524,22 @@ function M.setup(_)
 
   vim.api.nvim_create_autocmd("FileType", {
     pattern = { "poste_sql", "poste_sqlite" },
-    callback = function()
+    callback = function(args)
       pcall(vim.treesitter.language.register, "__poste_sql_disabled__", "poste_sql")
       pcall(vim.treesitter.language.register, "__poste_sql_disabled__", "poste_sqlite")
+      buffer_setup.setup_buffer_keymaps(args.buf)
+      ensure_sql_keymaps(args.buf)
+      setup_db_browser_keymap(args.buf)
+    end,
+  })
+
+  vim.api.nvim_set_hl(0, "SqlDirectiveComment", { link = "Special" })
+
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "sql", "poste_sql", "poste_sqlite" },
+    callback = function(args)
+      local sql_syntax = require("poste.sql.syntax")
+      sql_syntax.highlight_directive_comments(args.buf)
     end,
   })
 
