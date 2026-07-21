@@ -258,11 +258,9 @@ function M.execute_import(table_info, valid_rows, col_map, table_cols, callback)
         end
       end,
     })
-  end
-    end
-  end
+end
 
-  send_chunk(1)
+send_chunk(1)
 end
 
 return M
