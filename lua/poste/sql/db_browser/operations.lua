@@ -398,9 +398,10 @@ function M.modify_col(node, context)
 
   local dialect = get_dialect(table_node, context)
   local conn = get_connection_name(table_node, context)
+  local types = require("poste.sql.db_browser.completion").get_types(dialect)
 
   local fields = {
-    { label = "Type",     key = "col_type", value = node.meta and node.meta.col_type or "", kind = "text" },
+    { label = "Type",     key = "col_type", value = node.meta and node.meta.col_type or "", kind = "select", choices = types },
     { label = "Nullable", key = "nullable", value = not not (node.meta and node.meta.nullable), kind = "bool" },
     { label = "Default",  key = "default",  value = safe_str(node.meta and node.meta.default), kind = "text" },
     { label = "Comment",  key = "comment",  value = safe_str(node.meta and node.meta.comment), kind = "text" },
@@ -542,12 +543,13 @@ function M.new_column(node, context)
 
   local dialect = get_dialect(table_node, context)
   local conn = get_connection_name(table_node, context)
+  local types = require("poste.sql.db_browser.completion").get_types(dialect)
 
   local fields = {
-    { label = "Name",     key = "col_name",  value = "",   kind = "text" },
-    { label = "Type",     key = "col_type",  value = "TEXT", kind = "text" },
-    { label = "Nullable", key = "nullable",  value = true, kind = "bool" },
-    { label = "Default",  key = "default",   value = "",   kind = "text" },
+    { label = "Name",     key = "col_name",  value = "",     kind = "text" },
+    { label = "Type",     key = "col_type",  value = "TEXT", kind = "select", choices = types },
+    { label = "Nullable", key = "nullable",  value = true,   kind = "bool" },
+    { label = "Default",  key = "default",   value = "",     kind = "text" },
   }
 
   vim.g.poste_sql_dialect = dialect

@@ -1,6 +1,6 @@
 --- Data-driven form UI for DB Browser operations (Modify Column, New Table, etc.)
 --- M.open(title, fields, on_submit) renders a floating form window.
---- fields: { { label, key, value, kind }, ... }  kind = "text" | "bool"
+--- fields: { { label, key, value, kind }, ... }  kind = "text" | "bool" | "select"
 local M = {}
 
 local state = require("poste.state")
@@ -161,6 +161,7 @@ function M.open(title, fields, on_submit)
   local field_rows = {}
   local submit_row = 0
   local closed = false
+  local editing = false
 
   local function refresh()
     field_rows, submit_row = render_form(form_buf, title, fields, current_idx)
@@ -179,12 +180,14 @@ function M.open(title, fields, on_submit)
     end
   end
 
-  -- Auto-close on blur
+  -- Auto-close on blur (unless editing a sub-dialog)
   local au_group = vim.api.nvim_create_augroup("PosteFormClose", { clear = true })
   vim.api.nvim_create_autocmd("WinLeave", {
     group = au_group,
     buffer = form_buf,
-    callback = close,
+    callback = function()
+      if not editing then close() end
+    end,
   })
 
   local function move_cursor(delta)
@@ -204,9 +207,30 @@ function M.open(title, fields, on_submit)
       return
     end
 
-    -- Text field: open vim.ui.input
+    -- Text / select field: open vim.ui.input / vim.ui.select
     local v = f.value
     local current_val = (v == nil or v == vim.NULL or type(v) == "userdata") and "" or tostring(v)
+
+    if f.kind == "select" and f.choices then
+      editing = true
+      local v = f.value
+      local current_val = (v == nil or v == vim.NULL or type(v) == "userdata") and "" or tostring(v)
+      vim.ui.input({
+        prompt = f.label .. ": ",
+        default = current_val,
+      }, function(input)
+        editing = false
+        if closed then return end
+        if input ~= nil then
+          f.value = input
+        end
+        if form_win and vim.api.nvim_win_is_valid(form_win) then
+          vim.api.nvim_set_current_win(form_win)
+        end
+        refresh()
+      end)
+      return
+    end
 
     -- For type fields, enable dialect-specific completion via blink.cmp.
     local completion = require("poste.sql.db_browser.completion")
@@ -214,11 +238,13 @@ function M.open(title, fields, on_submit)
       completion.enable_for_next_input()
     end
 
+    editing = true
     vim.ui.input({
       prompt = f.label .. ": ",
       default = current_val,
     }, function(input)
       completion.cleanup()
+      editing = false
       if closed then return end
       if input ~= nil then
         f.value = input
@@ -260,6 +286,26 @@ function M.open(title, fields, on_submit)
     if f and f.kind == "bool" then
       f.value = not f.value
       refresh()
+    end
+  end, opts)
+  vim.keymap.set("n", "t", function()
+    local f = fields[current_idx]
+    if f and f.kind == "select" and f.choices then
+      editing = true
+      vim.ui.select(f.choices, {
+        prompt = f.label .. ":",
+        format_item = function(item) return item end,
+      }, function(choice)
+        editing = false
+        if closed then return end
+        if choice then
+          f.value = choice
+        end
+        if form_win and vim.api.nvim_win_is_valid(form_win) then
+          vim.api.nvim_set_current_win(form_win)
+        end
+        refresh()
+      end)
     end
   end, opts)
   vim.keymap.set("n", "q", close, opts)

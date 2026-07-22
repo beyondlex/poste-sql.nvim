@@ -6,7 +6,7 @@ local M = {}
 local adapter = require("poste.sql.completion_adapter")
 
 
--- Dialect-specific type lists
+--- Dialect-specific type lists
 local types = {
   postgres = {
     "smallint", "integer", "bigint", "smallserial", "serial", "bigserial",
@@ -76,12 +76,13 @@ end
 --- Register the poste-sql-types provider into blink.cmp (idempotent).
 function M.ensure_registered()
   if adapter.has_provider("poste-sql-types") then return end
-  local cfg = adapter.get_config()
-  if not cfg then return end
-  cfg.sources.providers["poste-sql-types"] = {
-    name = "SQL Types",
+  adapter.register_source({
+    name = "poste-sql-types",
     module = "poste.sql.db_browser.completion",
-  }
+    score_offset = 1000,
+    min_keyword_length = 0,
+    should_show_items = true,
+  })
 end
 
 function M.new(opts)
@@ -105,6 +106,7 @@ function M:get_trigger_characters() return {} end
 
 local _enabled = false
 local _orig_providers = nil
+local _orig_enabled = nil
 
 --- Enable SQL type completion for the next DressingInput buffer.
 --- Must call M.cleanup() after the input is done.
@@ -112,15 +114,44 @@ function M.enable_for_next_input()
   if _enabled then return end
   _enabled = true
   M.ensure_registered()
-  _orig_providers = adapter.get_source_lib().per_filetype_provider_ids["DressingInput"]
-  adapter.get_source_lib().per_filetype_provider_ids["DressingInput"] = { "poste-sql-types" }
+  local lib = adapter.get_source_lib()
+  if lib then
+    _orig_providers = lib.per_filetype_provider_ids["DressingInput"]
+    lib.per_filetype_provider_ids["DressingInput"] = { "poste-sql-types" }
+  end
+  -- blink.cmp disables completion for buftype=prompt (DressingInput).
+  -- Patch the enabled function to allow DressingInput buffers.
+  local cfg = adapter.get_config()
+  if cfg and cfg.completion then
+    _orig_enabled = cfg.completion.enabled
+    cfg.completion.enabled = function()
+      if vim.bo.filetype == "DressingInput" then return true end
+      if type(_orig_enabled) == "function" then return _orig_enabled() end
+      return true
+    end
+  end
 end
 
 --- Clean up after input is done.
 function M.cleanup()
   _enabled = false
-  adapter.get_source_lib().per_filetype_provider_ids["DressingInput"] = _orig_providers
+  local lib = adapter.get_source_lib()
+  if lib then
+    lib.per_filetype_provider_ids["DressingInput"] = _orig_providers
+  end
   _orig_providers = nil
+  if _orig_enabled ~= nil then
+    local cfg = adapter.get_config()
+    if cfg and cfg.completion then
+      cfg.completion.enabled = _orig_enabled
+    end
+    _orig_enabled = nil
+  end
+end
+
+--- Get type list for a dialect.
+function M.get_types(dialect)
+  return types[dialect] or types.postgres
 end
 
 return M
