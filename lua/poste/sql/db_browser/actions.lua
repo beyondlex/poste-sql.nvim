@@ -271,18 +271,18 @@ local function do_jump(index)
   s.current = index
 
   local match = s.matches[index]
-  local ctx = state.context
+  local ctx = s.context
   local search_dir = get_search_dir(ctx.source_buf)
 
   expand_ancestors(match.ancestors, search_dir, function()
     vim.schedule(function()
       -- Update header with match info
-      _G.poste_search_info = { pattern = state.pattern, current = state.current, total = #state.matches }
+      _G.poste_search_info = { pattern = s.pattern, current = s.current, total = #s.matches }
       local new_map = tree.render_tree(ctx.browser_buf, ctx.line_to_node, ctx.root_nodes, ctx.conn_label)
       for i, n in ipairs(new_map) do ctx.line_to_node[i] = n end
 
       -- Highlight matching chars on all matches
-      highlight_match_chars(ctx.browser_buf, ctx.line_to_node, state.matches)
+      highlight_match_chars(ctx.browser_buf, ctx.line_to_node, s.matches)
 
       -- Line-level highlight only on current match
       for i, n in ipairs(ctx.line_to_node) do
