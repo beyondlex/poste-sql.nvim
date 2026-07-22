@@ -105,6 +105,11 @@ local function setup_browser_buffer()
     end, opts)
   end
 
+  k = state.get_keymap("sql_db_browser", "help", "g?")
+  if k then
+    vim.keymap.set("n", k, function() require("poste.help").open() end, opts)
+  end
+
   local table_ops = require("poste.sql.table_ops")
   table_ops.register_keymaps(browser_buf, function()
     local buf_line = vim.fn.line(".")

@@ -128,6 +128,11 @@ function M.get_dataset_buffer()
   k = state.get_keymap("sql_dataset", "commit_edits", "<leader>w")
   if k then vim.keymap.set("n", k, function() require("poste.sql.edit_commit").commit_edits() end, opts) end
 
+  k = state.get_keymap("sql_dataset", "help", "g?")
+  if k then
+    vim.keymap.set("n", k, function() require("poste.help").open() end, opts)
+  end
+
   -- BufWriteCmd: :w triggers commit
   vim.api.nvim_create_autocmd("BufWriteCmd", {
     buffer = D.dataset_buffer,
