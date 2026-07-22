@@ -161,7 +161,7 @@ function M.update()
       local before = col_pos > 1 and segment:sub(col_pos - 1, col_pos - 1) or ""
       local after = col_pos + #target_col <= #segment and segment:sub(col_pos + #target_col, col_pos + #target_col) or ""
       dbg("found at col_pos=" .. col_pos .. " before='" .. before .. "' after='" .. after .. "'")
-      if (before:match("[%s_,(]") or before == "") and (after:match("[%s_,)]") or after == "") then
+      if (before:match("[%s_,(`\"]") or before == "") and (after:match("[%s_,)`\"]") or after == "") then
         local buf_col = search_from + col_pos - 2
         dbg("PLACING extmark row=" .. row .. " col=" .. buf_col)
         vim.api.nvim_buf_set_extmark(bufnr, ns, row, buf_col, {

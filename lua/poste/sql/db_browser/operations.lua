@@ -1,6 +1,7 @@
 --- Operations dispatched from the DB Browser context menu.
 --- Each function: op(node, context) → performs the action.
 local state = require("poste.state")
+local cli = require("poste.cli")
 local tree = require("poste.sql.db_browser.tree")
 local async = require("poste.sql.db_browser.async")
 local icons = require("poste.sql.db_browser.icons")

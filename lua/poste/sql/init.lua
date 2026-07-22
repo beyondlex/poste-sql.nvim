@@ -540,6 +540,15 @@ function M.setup(_)
     callback = function(args)
       local sql_syntax = require("poste.sql.syntax")
       sql_syntax.highlight_directive_comments(args.buf)
+      -- Re-highlight directives on edits so manually typed @connection gets colored immediately
+      local group = vim.api.nvim_create_augroup("PosteSQLDirectiveHL_" .. args.buf, { clear = true })
+      vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+        group = group,
+        buffer = args.buf,
+        callback = function()
+          sql_syntax.highlight_directive_comments(args.buf)
+        end,
+      })
     end,
   })
 
